@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault-secrets-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.releases.hashicorp.com
+      chart: vault-secrets-operator
+      targetRevision: "1.3.0"
+      helm:
+        valueFiles:
+          - https://raw.githubusercontent.com/HV-Hung/homelab-gitops/main/infra/vault/operator/values.yaml
+    - repoURL: https://github.com/HV-Hung/homelab-gitops
+      targetRevision: main
+      path: infra/vault/operator/extra_manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vault
+  syncPolicy: {}

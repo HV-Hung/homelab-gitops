@@ -1,0 +1,83 @@
+## Bitnami PostgreSQL High-Performance Homelab Configuration
+## Target: K3s on Ubuntu / Mac Mini M4
+
+# 1. ARCHITECTURE & SCALING
+# Use 'standalone' for dev to save RAM, 'replication' for prod-like testing.
+architecture: standalone
+
+# 2. AUTHENTICATION (Best Practice: Use External Secrets)
+auth:
+  # Do not put plain-text passwords here for professional GitOps.
+  # Create a secret first: kubectl create secret generic pg-secret --from-literal=password=YourPass
+  existingSecret: "pg-secret"
+  database: family_tree_main # Default DB
+  username: admin_user
+
+# 3. PRIMARY NODE CONFIGURATION
+primary:
+  name: "primary"
+  
+  # RESOURCE LIMITS (Optimized for M4/Ubuntu Lab)
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+  # PERSISTENCE (Separate Volume)
+  persistence:
+    persistence:
+    enabled: true
+    ## This must match the name of the PVC you created above
+    existingClaim: "psql-local-pvc"
+    
+    ## Set these to null/empty so Helm doesn't try to manage the PVC
+    storageClass: ""
+    size: ""
+  # 4. INITIALIZATION (Your Multi-DB/Schema Requirement)
+  # These scripts run only during the first volume creation.
+  initdb:
+    scripts:
+      01_setup_environments.sql: |
+        -- Create separate databases
+        CREATE DATABASE dev_db;
+        CREATE DATABASE prod_db;
+
+        -- Connect to Dev and create schema
+        \c dev_db;
+        CREATE SCHEMA IF NOT EXISTS dev_schema;
+        
+        -- Connect to Prod and create schema
+        \c prod_db;
+        CREATE SCHEMA IF NOT EXISTS prod_schema;
+
+  # 5. POSTGRES TUNING (Performance Optimization)
+  extendedConfiguration: |
+    max_connections = 100
+    shared_buffers = 256MB
+    work_mem = 16MB
+    maintenance_work_mem = 64MB
+
+# 6. NETWORK & SERVICE
+service:
+  type: ClusterIP
+  ports:
+    postgresql: 5432
+
+# 7. OBSERVABILITY (DevOps Best Practice)
+metrics:
+  enabled: false
+  # Sidecar container for Prometheus to scrape DB performance
+  serviceMonitor:
+    enabled: false # Set to true if you have Prometheus Operator installed
+
+# 8. SECURITY CONTEXT (K8s Best Practice)
+containerSecurityContext:
+  enabled: true
+  runAsUser: 1001
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL

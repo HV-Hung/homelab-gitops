@@ -1,0 +1,30 @@
+replicaCount: 1
+image:
+  repository: ""
+  tag: "latest"
+
+ingress:
+  enabled: true
+  host: ""
+
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+cronjob:
+  enabled: false
+  schedule: ""
+
+configmap:
+  enabled: false
+  data: {}
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "256Mi"

@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudflared
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/HV-Hung/homelab-gitops
+    targetRevision: main
+    path: infra/cloudflare
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cloudflare
+  syncPolicy: {}

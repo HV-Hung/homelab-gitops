@@ -1,0 +1,17 @@
+image:
+  repository: your-registry/api-service
+  tag: "1.4.2"
+
+ingress:
+  enabled: true
+  host: api.yourdomain.com
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 8
+
+resources:
+  requests:
+    cpu: "200m"
+    memory: "256Mi"

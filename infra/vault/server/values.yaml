@@ -1,0 +1,79 @@
+global:
+  enabled: true
+
+server:
+  replicas: 1
+
+  ha:
+    enabled: false
+
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: local-path
+
+  auditStorage:
+    enabled: true
+    size: 5Gi
+    storageClass: local-path
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+
+  ui:
+    enabled: true
+    serviceType: ClusterIP
+
+  ingress:
+    enabled: true
+    ingressClassName: "nginx"
+    pathType: Prefix
+    activeService: true
+    hosts:
+      - host: "vault.hungops.tech"
+        paths: []
+
+  extraEnvironmentVars:
+    VAULT_AZUREKEYVAULT_VAULT_NAME: "homelab-vault-kv"
+    VAULT_AZUREKEYVAULT_KEY_NAME: "vault-unseal-key"
+
+  # Secrets imported from manually created k8s secret 'vault-kms-creds'
+  extraSecretEnvironmentVars:
+    - envName: AZURE_TENANT_ID
+      secretName: vault-kms-creds
+      secretKey: AZURE_TENANT_ID
+    - envName: AZURE_CLIENT_ID
+      secretName: vault-kms-creds
+      secretKey: AZURE_CLIENT_ID
+    - envName: AZURE_CLIENT_SECRET
+      secretName: vault-kms-creds
+      secretKey: AZURE_CLIENT_SECRET
+
+  standalone:
+    enabled: "-"
+    config: |-
+      ui = true
+
+      listener "tcp" {
+        tls_disable = 1
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+      storage "file" {
+        path = "/vault/data"
+      }
+
+      seal "azurekeyvault" {
+        client_id      = "${AZURE_CLIENT_ID}"
+        client_secret  = "${AZURE_CLIENT_SECRET}"
+        tenant_id      = "${AZURE_TENANT_ID}"
+        vault_name     = "${VAULT_AZUREKEYVAULT_VAULT_NAME}"
+        key_name       = "${VAULT_AZUREKEYVAULT_KEY_NAME}"
+      }
+
+
+  
+injector:
+  enabled: false
