@@ -27,6 +27,9 @@ primary:
       01_init_databases.sh: |
         #!/bin/bash
         set -e
+
+        export PGPASSWORD="$ADMIN_PASSWORD"
+
         psql -v ON_ERROR_STOP=1 --username postgres <<-EOSQL
           CREATE USER dev_user WITH PASSWORD '${DEV_PASSWORD}';
           CREATE DATABASE dev OWNER dev_user;
@@ -42,6 +45,11 @@ primary:
   # These become available as psql variables via PGOPTIONS or
   # as shell env vars used in the .sh init script alternative.
   extraEnvVars:
+    - name: ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: admin-db-secret
+          key: DB_PASSWORD
     - name: DEV_PASSWORD
       valueFrom:
         secretKeyRef:
