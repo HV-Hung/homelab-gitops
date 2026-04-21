@@ -1,1 +1,6 @@
-{}
+grafana:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - grafana.hungops.tech
