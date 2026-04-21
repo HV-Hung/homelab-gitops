@@ -8,15 +8,19 @@ metadata:
 spec:
   project: default
   sources:
+    - repoURL: https://github.com/HV-Hung/homelab-gitops
+      targetRevision: main
+      ref: values
     - repoURL: https://helm.releases.hashicorp.com
       chart: vault-secrets-operator
       targetRevision: "1.3.0"
       helm:
         valueFiles:
-          - https://raw.githubusercontent.com/HV-Hung/homelab-gitops/main/infra/vault/operator/values.yaml
+          - $values/infra/vault/operator/values.yaml
     - repoURL: https://github.com/HV-Hung/homelab-gitops
       targetRevision: main
       path: infra/vault/operator/extra_manifests
+    
   destination:
     server: https://kubernetes.default.svc
     namespace: vault

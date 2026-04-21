@@ -7,13 +7,20 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
-  source:
-    repoURL: https://charts.bitnami.com/bitnami
-    chart: postgresql
-    targetRevision: "18.5.24"
-    helm:
-      valueFiles:
-        - https://raw.githubusercontent.com/HV-Hung/homelab-gitops/main/infra/databases/postgresql/values.yaml
+  sources:
+    - repoURL: https://github.com/HV-Hung/homelab-gitops
+      targetRevision: main
+      ref: values
+    - repoURL: https://charts.bitnami.com/bitnami
+      chart: postgresql
+      targetRevision: "18.5.24"
+      helm:
+        valueFiles:
+          - $values/infra/databases/postgresql/values.yaml
+    - repoURL: https://github.com/HV-Hung/homelab-gitops
+      targetRevision: main
+      path: infra/databases/postgresql/extra_manifests
+  
   destination:
     server: https://kubernetes.default.svc
     namespace: databases

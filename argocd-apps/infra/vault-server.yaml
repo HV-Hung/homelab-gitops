@@ -7,13 +7,16 @@ metadata:
     argocd.argoproj.io/sync-wave: "-5"
 spec:
   project: default
-  source:
-    repoURL: https://helm.releases.hashicorp.com
-    chart: vault
-    targetRevision: "0.32.0"
-    helm:
-      valueFiles:
-        - https://raw.githubusercontent.com/HV-Hung/homelab-gitops/main/infra/vault/server/values.yaml
+  sources:
+    - repoURL: https://helm.releases.hashicorp.com
+      chart: vault
+      targetRevision: "0.32.0"
+      helm:
+        valueFiles:
+          - $values/infra/vault/server/values.yaml
+    - repoURL: https://github.com/HV-Hung/homelab-gitops
+      targetRevision: main
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: vault

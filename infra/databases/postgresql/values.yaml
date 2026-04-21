@@ -1,83 +1,71 @@
-## Bitnami PostgreSQL High-Performance Homelab Configuration
-## Target: K3s on Ubuntu / Mac Mini M4
+## ============================================================
+## Bitnami PostgreSQL Helm Values
+## 1 replica | default PV | dev+prod DBs | 3 existing secrets
+## ============================================================
 
-# 1. ARCHITECTURE & SCALING
-# Use 'standalone' for dev to save RAM, 'replication' for prod-like testing.
-architecture: standalone
+architecture: standalone  # single replica (no replication)
 
-# 2. AUTHENTICATION (Best Practice: Use External Secrets)
 auth:
-  # Do not put plain-text passwords here for professional GitOps.
-  # Create a secret first: kubectl create secret generic pg-secret --from-literal=password=YourPass
-  existingSecret: "pg-secret"
-  database: family_tree_main # Default DB
-  username: admin_user
+  # Use the existing admin secret for the postgres superuser
+  existingSecret: admin-db-secret
+  secretKeys:
+    adminPasswordKey: DB_PASSWORD # key inside psql-admin-secret
 
-# 3. PRIMARY NODE CONFIGURATION
+  # Bitnami only natively manages ONE user via auth.username/password.
+  # We skip it here and create both users manually in initdb scripts below.
+  username: ""
+  database: ""
+
 primary:
-  name: "primary"
-  
-  # RESOURCE LIMITS (Optimized for M4/Ubuntu Lab)
-  resources:
-    requests:
-      cpu: 250m
-      memory: 512Mi
-    limits:
-      cpu: "1"
-      memory: 1Gi
+  # ── Replica count ─────────────────────────────────────────
+  replicaCount: 1
 
-  # PERSISTENCE (Separate Volume)
-  persistence:
-    persistence:
-    enabled: true
-    ## This must match the name of the PVC you created above
-    existingClaim: "psql-local-pvc"
-    
-    ## Set these to null/empty so Helm doesn't try to manage the PVC
-    storageClass: ""
-    size: ""
-  # 4. INITIALIZATION (Your Multi-DB/Schema Requirement)
-  # These scripts run only during the first volume creation.
+  # ── Init scripts: create dev + prod databases and users ───
   initdb:
+    user: postgres
     scripts:
-      01_setup_environments.sql: |
-        -- Create separate databases
-        CREATE DATABASE dev_db;
-        CREATE DATABASE prod_db;
+      01_init_databases.sh: |
+        #!/bin/bash
+        set -e
+        psql -v ON_ERROR_STOP=1 --username postgres <<-EOSQL
+          CREATE USER dev_user WITH PASSWORD '${DEV_PASSWORD}';
+          CREATE DATABASE dev OWNER dev_user;
+          GRANT ALL PRIVILEGES ON DATABASE dev TO dev_user;
 
-        -- Connect to Dev and create schema
-        \c dev_db;
-        CREATE SCHEMA IF NOT EXISTS dev_schema;
-        
-        -- Connect to Prod and create schema
-        \c prod_db;
-        CREATE SCHEMA IF NOT EXISTS prod_schema;
+          CREATE USER prod_user WITH PASSWORD '${PROD_PASSWORD}';
+          CREATE DATABASE prod OWNER prod_user;
+          GRANT ALL PRIVILEGES ON DATABASE prod TO prod_user;
+        EOSQL
 
-  # 5. POSTGRES TUNING (Performance Optimization)
-  extendedConfiguration: |
-    max_connections = 100
-    shared_buffers = 256MB
-    work_mem = 16MB
-    maintenance_work_mem = 64MB
 
-# 6. NETWORK & SERVICE
-service:
-  type: ClusterIP
-  ports:
-    postgresql: 5432
+  # ── Inject dev + prod passwords from existing secrets ─────
+  # These become available as psql variables via PGOPTIONS or
+  # as shell env vars used in the .sh init script alternative.
+  extraEnvVars:
+    - name: DEV_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: dev-db-secret
+          key: DB_PASSWORD
+    - name: PROD_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: prod-db-secret
+          key: DB_PASSWORD
 
-# 7. OBSERVABILITY (DevOps Best Practice)
-metrics:
-  enabled: false
-  # Sidecar container for Prometheus to scrape DB performance
-  serviceMonitor:
-    enabled: false # Set to true if you have Prometheus Operator installed
+  # ── Persistence: use default StorageClass (default PV) ────
+  persistence:
+    enabled: true
+    # storageClass: ""    # empty = cluster default StorageClass
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
 
-# 8. SECURITY CONTEXT (K8s Best Practice)
-containerSecurityContext:
-  enabled: true
-  runAsUser: 1001
-  runAsNonRoot: true
-  capabilities:
-    drop:
-      - ALL
+  # ── Resources (adjust to your cluster) ────────────────────
+  resourcesPreset: "small"   # none | nano | micro | small | medium | large
+
+  # ── Service ───────────────────────────────────────────────
+  service:
+    type: ClusterIP
+    ports:
+      postgresql: 5432

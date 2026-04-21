@@ -7,13 +7,18 @@ metadata:
     argocd.argoproj.io/sync-wave: "-3"
 spec:
   project: default
-  source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: "83.6.0"
-    helm:
-      valueFiles:
-        - https://raw.githubusercontent.com/HV-Hung/homelab-gitops/main/infra/monitoring/kube-prometheus-stack/values.yaml
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: "83.6.0"
+      helm:
+        valueFiles:
+          - $values/infra/monitoring/kube-prometheus-stack/values.yaml
+
+    - repoURL: https://github.com/HV-Hung/homelab-gitops
+      targetRevision: main
+      ref: values
+
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
