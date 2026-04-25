@@ -22,8 +22,9 @@ secretRef:
       key: DB_PASSWORD
 
 ingress:
+  enabled: true
   className: "nginx"
-  host: "family.dev.hungops.tech"
+  host: "dev-family.hungops.tech"
 
 resources:
   requests:
