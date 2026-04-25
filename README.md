@@ -1,6 +1,6 @@
 # homelab-gitops
 
-A GitOps monorepo for managing a home Kubernetes cluster (k3s) using ArgoCD, Helm, and HashiCorp Vault.
+A GitOps monorepo for managing a home Kubernetes cluster (k3s) using ArgoCD, Helm, HashiCorp Vault, and Terraform.
 
 ## Architecture
 
@@ -24,55 +24,79 @@ bootstrap/root.yaml               ← Applied once manually to seed ArgoCD
 | Infrastructure | `argocd-apps/infra/` + `infra/` | `infra` | ingress-nginx, Vault, PostgreSQL, monitoring, Cloudflare |
 | Env baseline | `infra/env-base/` | `infra` | Per-namespace ServiceAccount, VaultAuth, VaultStaticSecret |
 | Applications | `apps/<service>/` | `apps` | Service Helm charts consuming the library chart |
+| Provisioning | `terraform/` | n/a (Terraform) | Zero-trust Azure identity + Vault configuration |
 
-## Bootstrap (First-Time Setup)
+## Operations Runbook
 
-Run once against a fresh k3s cluster:
+### 1. Zero Trust Setup (Azure Identity)
+
+Run this one-time step to create the Azure AD Application, Key Vault, and least-privilege Role Assignments needed for Vault's auto-unseal.
+
+```bash
+cd terraform/azure
+terraform init
+terraform apply
+
+# Export outputs as K8s secret before starting cluster tools
+kubectl create namespace vault
+kubectl create secret generic vault-kms-creds -n vault \
+  --from-literal=AZURE_TENANT_ID=$(terraform output -raw azure_tenant_id) \
+  --from-literal=AZURE_CLIENT_ID=$(terraform output -raw azure_client_id) \
+  --from-literal=AZURE_CLIENT_SECRET=$(terraform output -raw azure_client_secret)
+```
+
+### 2. Bootstrap (First-Time Setup)
+
+Run once against a fresh k3s cluster (after step 1):
 
 ```bash
 cd bootstrap
 ./bootstrap.sh
 ```
 
-This script:
-1. Creates all namespaces and storage classes
-2. Installs ArgoCD via Helm
-3. Applies `root.yaml` to kick off the GitOps loop
+This script is idempotent. It will:
+1. Create all namespaces and storage classes
+2. Upgrade/Install ArgoCD via Helm
+3. Apply `root.yaml` to kick off the GitOps loop
 
-> **Note:** Before running, manually create the `vault-kms-creds` secret in the `vault` namespace with Azure service principal credentials for Vault auto-unseal.
->
-> ```bash
-> kubectl create secret generic vault-kms-creds -n vault \
->   --from-literal=AZURE_TENANT_ID=<tenant_id> \
->   --from-literal=AZURE_CLIENT_ID=<client_id> \
->   --from-literal=AZURE_CLIENT_SECRET=<client_secret>
-> ```
+### 3. Vault Configuration (Post-Install)
 
-## Directory Structure
+Once the cluster is bootstrapped and Vault is unsealed (happens automatically via Azure KV):
 
+```bash
+# Authenticate
+export VAULT_ADDR="http://vault.hungops.tech" 
+export VAULT_TOKEN="<your-root-token>"
+
+# Configure Auth Methods, Policies, and Roles per namespace
+cd terraform/vault
+terraform init
+terraform apply
+
+# Populate secrets manually (one-time manual data entry)
+vault kv put secret/admin DB_PASSWORD="..."
+vault kv put secret/dev DB_PASSWORD="..."
+vault kv put secret/prod DB_PASSWORD="..."
+vault kv put secret/cloudflare token="..."
 ```
-.
-├── apps/
-│   ├── _chart/          # Library Helm chart (reusable templates)
-│   └── <service>/       # One chart per service, depends on _chart
-├── argocd-apps/
-│   └── infra/           # ArgoCD Application manifests for infra layer
-├── bootstrap/
-│   ├── root.yaml        # The App of Apps entry point
-│   ├── bootstrap.sh     # One-shot bootstrap script
-│   └── core/            # ApplicationSets and AppProjects managed by ArgoCD
-├── cluster/
-│   ├── namespaces.yaml  # All cluster namespaces
-│   └── storage-classes.yaml
-└── infra/
-    ├── argocd/          # ArgoCD Helm values
-    ├── cloudflare/      # Cloudflare tunnel manifests
-    ├── databases/       # PostgreSQL Helm values
-    ├── env-base/        # Per-environment baseline Helm chart
-    ├── ingress/         # ingress-nginx Helm values
-    ├── monitoring/      # kube-prometheus-stack Helm values
-    └── vault/           # Vault server + VSO Helm values and extra manifests
+
+### 4. Teardown (Full Cleanup)
+
+If you need to nuke the cluster workloads and start fresh (k3s node remains active):
+
+> **⚠️ WARNING:** This is destructive. Persistent volumes (Postgres DB, Vault data) will be deleted. Ensure secrets are backed up.
+
+```bash
+cd bootstrap
+./teardown.sh
 ```
+
+## Security & Access Control
+
+- **ArgoCD Projects**: The `infra` project has full cluster access. `apps` project is restricted to `dev`/`prod` namespaces with no cluster-scoped resources.
+- **Secrets Management**: All runtime secrets are pulled from Vault via Vault Secrets Operator (VSO). No secrets are stored in Git.
+- **Vault Least Privilege**: Policies are isolated by namespace via Terraform. A compromised pod in `dev` cannot read secrets for `prod` or `cloudflared`.
+- **Vault Auto-Unseal**: Uses Azure Key Vault (BYOK) configured via Terraform with strict `Key Vault Crypto User` permissions allowing only key wrap/unwrap operations.
 
 ## Adding a New Application
 
@@ -87,17 +111,3 @@ This script:
 3. Add `values.yaml`, `values-dev.yaml`, `values-prod.yaml`
 4. Add a `templates/all.yaml` that calls the library templates
 5. The `cluster-apps` ApplicationSet will automatically detect and deploy the new app
-
-## Environments
-
-| Env | Namespace | DB User | Ingress Host |
-|---|---|---|---|
-| dev | `dev` | `dev_user` | `dev-*.hungops.tech` |
-| prod | `prod` | `prod_user` | `*.hungops.tech` |
-
-## Security Notes
-
-- **ArgoCD Projects**: The `infra` project has full cluster access; the `apps` project is restricted to `dev`/`prod` namespaces only with no cluster-scoped resources.
-- **Secrets**: All runtime secrets are pulled from Vault via the Vault Secrets Operator. No secrets are stored in Git.
-- **Vault TLS**: Vault's internal listener has TLS disabled (`tls_disable = 1`). External access is encrypted via the Nginx ingress + TLS termination. Internal cluster traffic to Vault is unencrypted — accepted risk for a home lab.
-- **Vault auto-unseal**: Uses Azure Key Vault (BYOK). Vault can restart and unseal automatically without manual intervention.

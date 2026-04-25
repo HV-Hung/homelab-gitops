@@ -6,6 +6,8 @@ metadata:
   labels:
     component: argocd-project
     layer: infrastructure
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
 spec:
   description: Project for cluster-wide infrastructure components
   sourceRepos:
@@ -28,6 +30,8 @@ metadata:
   labels:
     component: argocd-project
     layer: applications
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
 spec:
   description: Project for business applications
   sourceRepos:

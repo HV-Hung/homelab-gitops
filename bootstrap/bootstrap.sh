@@ -5,7 +5,7 @@ kubectl apply -f cluster/
 
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
-helm install argocd argo/argo-cd \
+helm upgrade --install argocd argo/argo-cd \
   --namespace argocd \
   --values infra/argocd/values.yaml \
   --version 9.5.2

@@ -1,1 +1,3 @@
 environment: prod
+vault:
+  authRole: prod

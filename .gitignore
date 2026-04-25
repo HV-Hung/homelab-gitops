@@ -27,3 +27,19 @@ Thumbs.db
 !vault-secret.yaml
 !vault-auth.yaml
 !tunnel-secret.yaml
+
+# Secrets
+.env
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc

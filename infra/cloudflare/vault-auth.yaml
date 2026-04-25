@@ -2,12 +2,12 @@ apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultAuth
 metadata:
   name: default
-  namespace: databases
+  namespace: cloudflare
 spec:
   method: kubernetes
   kubernetes:
     serviceAccount: vso-sa
-    role: databases
+    role: cloudflare
   vaultAuthGlobalRef:
     allowDefault: true
     namespace: vault

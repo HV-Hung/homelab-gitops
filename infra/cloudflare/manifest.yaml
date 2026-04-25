@@ -23,17 +23,17 @@ spec:
         - --config
         - /etc/cloudflared/config/config.yaml
         - run
+        env:
+        - name: TUNNEL_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: tunnel-token
+              key: token
         volumeMounts:
         - name: config
           mountPath: /etc/cloudflared/config
           readOnly: true
-        - name: creds
-          mountPath: /etc/cloudflared/creds
-          readOnly: true
       volumes:
-      - name: creds
-        secret:
-          secretName: tunnel-credentials
       - name: config
         configMap:
           name: cloudflared-config
@@ -46,7 +46,6 @@ metadata:
 data:
   config.yaml: |
     tunnel: e187c769-6604-4d3b-8fdc-1171d0e34b9c
-    credentials-file: /etc/cloudflared/creds/credentials.json
     ingress:
       - hostname: "hungops.tech"
         service: http://ingress-nginx-controller.ingress.svc.cluster.local:80
