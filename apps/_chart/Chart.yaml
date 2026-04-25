@@ -1,6 +1,6 @@
 apiVersion: v2
-name: generic-app
-description: A generic Helm chart for Go apps
-type: application
+name: app
+description: A generic Helm chart for apps
+type: library
 version: 0.1.0
 appVersion: "1.0.0"

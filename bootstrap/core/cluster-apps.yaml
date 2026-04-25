@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cluster-apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/HV-Hung/homelab-gitops
+              revision: main
+              directories:
+                - path: apps/*
+                - exclude: true
+                  path: apps/_chart
+          - list:
+              elements:
+                - env: dev
+                - env: prod
+  template:
+    metadata:
+      name: '{{.env}}-{{.path.basename}}'
+      namespace: argocd
+      annotations:
+        argocd.argoproj.io/sync-wave: "0"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/HV-Hung/homelab-gitops
+        targetRevision: main
+        path: '{{.path}}'
+        helm:
+          valueFiles:
+            - values.yaml
+            - values-{{.env}}.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.env}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

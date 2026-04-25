@@ -1,0 +1,28 @@
+# Helm generated folders
+charts/
+*.tgz
+
+# Ignore Chart.lock since we use dynamic local dependencies
+Chart.lock
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Vault/Secrets (Safety fallback)
+*vault*.yaml
+!*vault-operator*.yaml
+!*vault-server*.yaml
+!vault-secret.yaml
+!tunnel-secret.yaml

@@ -1,5 +1,5 @@
 image:
-  repository: your-registry/api-service
+  repository: your-registry/family-svc
   tag: "1.4.2"
 
 ingress:

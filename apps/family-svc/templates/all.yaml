@@ -1,0 +1,21 @@
+{{ include "app.deployment" . }}
+---
+{{ include "app.service" . }}
+{{- if .Values.ingress }}
+{{- if .Values.ingress.enabled }}
+---
+{{ include "app.ingress" . }}
+{{- end }}
+{{- end }}
+{{- if .Values.hpa }}
+{{- if .Values.hpa.enabled }}
+---
+{{ include "app.hpa" . }}
+{{- end }}
+{{- end }}
+{{- if .Values.configmap }}
+{{- if .Values.configmap.enabled }}
+---
+{{ include "app.configmap" . }}
+{{- end }}
+{{- end }}

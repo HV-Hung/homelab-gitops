@@ -1,0 +1,18 @@
+{{- define "app.service" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "app.fullname" . }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  type: {{ if .Values.service }}{{ .Values.service.type | default "ClusterIP" }}{{ else }}ClusterIP{{ end }}
+  ports:
+    - port: {{ if .Values.service }}{{ .Values.service.port | default 80 }}{{ else }}80{{ end }}
+      targetPort: {{ if .Values.service }}{{ .Values.service.targetPort | default 8080 }}{{ else }}8080{{ end }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "app.selectorLabels" . | nindent 4 }}
+{{- end -}}
+ 

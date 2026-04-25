@@ -1,0 +1,4 @@
+# This file acts as a base values file.
+# Defaults are safely handled by the `_chart` library.
+# Put global overrides for all environments here.
+
