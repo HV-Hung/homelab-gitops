@@ -4,9 +4,10 @@ metadata:
   name: default
   namespace: databases
 spec:
-  vaultAuthGlobalRef:
-    allowDefault: true
-    namespace: vault
+  method: kubernetes
   kubernetes:
     serviceAccount: vso-sa
     role: default
+  vaultAuthGlobalRef:
+    allowDefault: true
+    namespace: vault

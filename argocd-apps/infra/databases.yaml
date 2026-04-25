@@ -19,7 +19,7 @@ spec:
           - $values/infra/databases/postgresql/values.yaml
     - repoURL: https://github.com/HV-Hung/homelab-gitops
       targetRevision: main
-      path: infra/databases/postgresql/extra_manifests
+      path: infra/databases/postgresql/extra-manifests
   
   destination:
     server: https://kubernetes.default.svc

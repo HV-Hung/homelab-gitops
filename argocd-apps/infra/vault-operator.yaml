@@ -19,7 +19,7 @@ spec:
           - $values/infra/vault/operator/values.yaml
     - repoURL: https://github.com/HV-Hung/homelab-gitops
       targetRevision: main
-      path: infra/vault/operator/extra_manifests
+      path: infra/vault/operator/extra-manifests
     
   destination:
     server: https://kubernetes.default.svc
