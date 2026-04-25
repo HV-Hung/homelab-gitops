@@ -6,15 +6,22 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-5"
 spec:
-  project: default
-  source:
-    repoURL: https://kubernetes.github.io/ingress-nginx
-    chart: ingress-nginx
-    targetRevision: "4.15.0"
-    helm:
-      valueFiles:
-        - https://raw.githubusercontent.com/HV-Hung/homelab-gitops/main/infra/ingress/values.yaml
+  project: infra
+  sources:
+    - repoURL: https://github.com/HV-Hung/homelab-gitops
+      targetRevision: main
+      ref: values
+    - repoURL: https://kubernetes.github.io/ingress-nginx
+      chart: ingress-nginx
+      targetRevision: "4.15.0"
+      helm:
+        valueFiles:
+          - $values/infra/ingress/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: ingress
-  syncPolicy: {}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+

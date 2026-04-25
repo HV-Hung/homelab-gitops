@@ -13,7 +13,7 @@ env:
   - name: DB_NAME
     value: "prod"
   - name: DB_SSLMODE
-    value: "disable"
+    value: "require"
 
 secretRef:
   secretName: app-secret

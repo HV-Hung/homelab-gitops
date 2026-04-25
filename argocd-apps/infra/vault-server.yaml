@@ -6,7 +6,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-5"
 spec:
-  project: default
+  project: infra
   sources:
     - repoURL: https://helm.releases.hashicorp.com
       chart: vault
@@ -20,4 +20,7 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: vault
-  syncPolicy: {}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

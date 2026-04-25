@@ -5,6 +5,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
+  method: kubernetes
   kubernetes:
     role: {{ .Values.vault.authRole }}
     serviceAccount: vso-sa

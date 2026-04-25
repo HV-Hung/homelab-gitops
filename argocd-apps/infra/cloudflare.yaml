@@ -6,7 +6,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-4"
 spec:
-  project: default
+  project: infra
   source:
     repoURL: https://github.com/HV-Hung/homelab-gitops
     targetRevision: main
@@ -14,4 +14,7 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: cloudflare
-  syncPolicy: {}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
