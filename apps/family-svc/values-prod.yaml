@@ -9,9 +9,9 @@ env:
   - name: DB_PORT
     value: "5432"
   - name: DB_USER
-    value: "dev_user"
+    value: "prod_user"
   - name: DB_NAME
-    value: "dev"
+    value: "prod"
   - name: DB_SSLMODE
     value: "disable"
 
