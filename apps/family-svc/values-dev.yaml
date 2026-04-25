@@ -24,7 +24,7 @@ secretRef:
 ingress:
   enabled: true
   className: "nginx"
-  host: "family.hungops.tech"
+  host: "family.dev.hungops.tech"
 
 resources:
   requests:
@@ -33,13 +33,3 @@ resources:
   limits:
     cpu: "500m"
     memory: "256Mi"
-
-probes:
-  liveness:
-    enabled: true
-    path: /healthz/live
-    port: 8080
-  readiness:
-    enabled: true
-    path: /healthz/ready
-    port: 8080

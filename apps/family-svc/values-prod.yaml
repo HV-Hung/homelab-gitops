@@ -1,17 +1,35 @@
+replicaCount: 1
+
 image:
-  repository: your-registry/family-svc
-  tag: "1.4.2"
+  repository: "ghcr.io/hv-hung/family-svc"
+  tag: "latest"
+env:
+  - name: DB_HOST
+    value: "postgresql.databases.svc.cluster.local"
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_USER
+    value: "dev_user"
+  - name: DB_NAME
+    value: "dev"
+  - name: DB_SSLMODE
+    value: "disable"
+
+secretRef:
+  secretName: app-secret
+  secrets:
+    - name: DB_PASSWORD
+      key: DB_PASSWORD
 
 ingress:
   enabled: true
-  host: api.yourdomain.com
-
-hpa:
-  enabled: true
-  minReplicas: 2
-  maxReplicas: 8
+  className: "nginx"
+  host: "family.hungops.tech"
 
 resources:
   requests:
-    cpu: "200m"
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
     memory: "256Mi"

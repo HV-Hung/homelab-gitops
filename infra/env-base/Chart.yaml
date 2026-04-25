@@ -1,0 +1,6 @@
+apiVersion: v2
+name: env-base
+description: A Helm chart for deploying baseline resources to environment namespaces
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
