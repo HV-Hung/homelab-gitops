@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infra
+  namespace: argocd
+  labels:
+    component: argocd-project
+    layer: infrastructure
+spec:
+  description: Project for cluster-wide infrastructure components
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps
+  namespace: argocd
+  labels:
+    component: argocd-project
+    layer: applications
+spec:
+  description: Project for business applications
+  sourceRepos:
+    - 'https://github.com/HV-Hung/homelab-gitops'
+    - 'https://github.com/HV-Hung/homelab-gitops.git'
+  destinations:
+    - namespace: 'dev'
+      server: https://kubernetes.default.svc
+    - namespace: 'prod'
+      server: https://kubernetes.default.svc
+  # We block all cluster-scoped resources for applications as best practice
+  clusterResourceWhitelist: []
+  # We allow all namespaced resources for applications
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
