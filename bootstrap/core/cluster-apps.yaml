@@ -31,7 +31,7 @@ spec:
       source:
         repoURL: https://github.com/HV-Hung/homelab-gitops
         targetRevision: main
-        path: '{{.path}}'
+        path: '{{.path.path}}'
         helm:
           valueFiles:
             - values.yaml
