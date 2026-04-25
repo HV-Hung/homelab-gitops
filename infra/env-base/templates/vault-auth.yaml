@@ -1,0 +1,14 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: default
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  kubernetes:
+    role: {{ .Values.vault.authRole }}
+    serviceAccount: vso-sa
+    tokenExpirationSeconds: 600
+  vaultAuthGlobalRef:
+    allowDefault: true
+    namespace: vault

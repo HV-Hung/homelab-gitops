@@ -25,4 +25,5 @@ Thumbs.db
 !*vault-operator*.yaml
 !*vault-server*.yaml
 !vault-secret.yaml
+!vault-auth.yaml
 !tunnel-secret.yaml
